@@ -67,7 +67,6 @@ DATABASE_URL=postgresql://USER:PASSWORD@localhost:5433/hadassim_db
 
 ### 2. Install Dependencies
 
-```bash
 pip install -r requirements.txt
 
 3. Run the Server

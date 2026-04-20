@@ -5,7 +5,7 @@
 A system for managing registration and data retrieval for a school trip to Jerusalem.  
 This project was developed as part of the Phase A home assignment in the Hadassim program and demonstrates a full-stack application including backend, database, and user interface.
 
----
+
 
 ## Core Features (Phase A)
 
@@ -35,7 +35,6 @@ The system supports:
 
 > Update and Delete operations are not implemented, according to assignment requirements.
 
----
 
 ## Technologies
 
@@ -53,7 +52,7 @@ The system supports:
 ### Frontend
 - HTML
 
----
+
 
 ## Installation & Setup
 
@@ -64,7 +63,7 @@ hadassim_db
 
 Create a `.env` file and configure:
 DATABASE_URL=postgresql://USER:PASSWORD@localhost:5433/hadassim_db
----
+
 
 ### 2. Install Dependencies
 
@@ -120,5 +119,3 @@ Separation between backend and frontend
 
 The system highlights core principles such as data management, access control, and API-based communication.
 
-
-ה

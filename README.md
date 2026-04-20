@@ -69,52 +69,43 @@ DATABASE_URL=postgresql://USER:PASSWORD@localhost:5433/hadassim_db
 
 pip install -r requirements.txt
 
-3. Run the Server
+### 3. Run the Server
 uvicorn main:app --reload
 
 The server will be available at:
 
 http://127.0.0.1:8000
-4. Run the Frontend
+### 4. Run the Frontend
 
 Open index.html in your browser
 or run:
 
 python -m http.server 5500
-API Endpoints
+
+###  API Endpoints
 Method	Endpoint	Description
 POST	/students	Add a student
 POST	/teachers	Add a teacher
 GET	/students	Retrieve students (teachers only)
 
 Access to GET endpoints is restricted and requires teacher ID verification.
-System Preview
+ ### System Preview
 
 Add screenshots of:
 
 Registration forms for students and teachers
 Teacher dashboard displaying query results
-Assumptions & Design Decisions
-Access Control
+###  Assumptions & Design Decisions
+### Access Control
 
 User authentication is simplified and based on verifying the provided ID against the Teachers table for each request.
 
-Data Integrity
+### Data Integrity
 
 Each teacher can only access students belonging to their own class.
 
-Simplicity
+### Simplicity
 
 The system is designed to be clear and focused, demonstrating proper backend–database integration and API design.
 
-Summary
-
-This project demonstrates a basic full-stack system including:
-
-API development using FastAPI
-Relational database integration with PostgreSQL
-Data modeling using SQLAlchemy
-Separation between backend and frontend
-
-The system highlights core principles such as data management, access control, and API-based communication.
 

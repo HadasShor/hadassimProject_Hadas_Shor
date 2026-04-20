@@ -3,9 +3,6 @@
 ## School Trip Management System – Hadassim Program
 
 A system for managing registration and data retrieval for a school trip to Jerusalem.  
-This project was developed as part of the Phase A home assignment in the Hadassim program and demonstrates a full-stack application including backend, database, and user interface.
-
-
 
 ## Core Features (Phase A)
 
@@ -62,7 +59,7 @@ Create a PostgreSQL database named:
 hadassim_db
 
 Create a `.env` file and configure:
-DATABASE_URL=postgresql://USER:PASSWORD@localhost:5433/hadassim_db
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/hadassim_db
 
 
 ### 2. Install Dependencies
@@ -90,11 +87,20 @@ GET	/students	Retrieve students (teachers only)
 
 Access to GET endpoints is restricted and requires teacher ID verification.
  ### System Preview
+ 
+### Student Registration Form
+![Student Form](screenshots/student_reg.png)
+### Teacher Registration Form
+![Teacher Form](screenshots/teach_reg.png
+### Teacher View
+![]screenshots\teach_p.png)
+![]screenshots\stud_p.png)
+![](screenshots\class.png)
+![](screenshots\all.png)
 
-Add screenshots of:
 
-Registration forms for students and teachers
-Teacher dashboard displaying query results
+
+
 ###  Assumptions & Design Decisions
 ### Access Control
 

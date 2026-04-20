@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ניהול טיול שנתי</title>
+</head>
+<body>
+  <h1>מערכת ניהול טיול שנתי</h1>
+
+  <div style="border: 1px solid black; padding: 10px; margin-bottom: 10px;">
+    <h3>רישום (תלמידה/מורה)</h3>
+    שם: <input type="text" id="reg_name"> 
+    ת"ז: <input type="text" id="reg_id"> 
+    כיתה: <input type="text" id="reg_class">
+    <button onclick="register('students')">רשמי תלמידה</button>
+    <button onclick="register('teachers')">רשמי מורה</button>
+  </div>
+
+  <div style="border: 1px solid black; padding: 10px;">
+    <h3>אזור מורה - חיפוש ושליפה</h3>
+    
+    <strong>1. אימות מורה:</strong> 
+    <input type="text" id="auth_id" placeholder="ת"ז מורה מאמתת">
+    <hr>
+
+    <strong>2. אפשרויות חיפוש:</strong><br><br>
+    
+    חפשי תלמידה (ת"ז): <input type="text" id="search_student_id">
+    <button onclick="fetchData('student_spec')">חיפוש תלמידה</button>
+    <br><br>
+
+    חפשי מורה (ת"ז): <input type="text" id="search_teacher_id">
+    <button onclick="fetchData('teacher_spec')">חיפוש מורה</button>
+    <br><br>
+
+    <button onclick="fetchData('my_class')">הצגת התלמידות בכיתה שלי</button>
+    <button onclick="fetchData('all')">הצגת כל המאגר</button>
+
+    <p id="status_msg"></p>
+
+    <table border="1" id="res_table" style="display:none; margin-top: 10px;">
+      <thead>
+        <tr>
+          <th>שם</th>
+          <th>ת"ז</th>
+          <th>כיתה</th>
+        </tr>
+      </thead>
+      <tbody id="res_body"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+
+   async function register(type) {
+  // איסוף הנתונים מה-Inputs לפי ה-id שלהם
+  const nameVal = document.getElementById('reg_name').value;
+  const idVal = document.getElementById('reg_id').value;
+  const classVal = document.getElementById('reg_class').value;
+
+  // ודאי שהשמות כאן זהים בדיוק למה שמופיע ב-schemas.TeacherCreate
+  const payload = {
+    full_name: nameVal,
+    identity_number: idVal,
+    class_name: classVal
+  };
+
+  try {
+    const r = await fetch(`${API_URL}/${type}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await r.json();
+
+    if (!r.ok) {
+      // כאן תקבלי את ההודעה "Teacher already exists" אם המורה קיימת
+      alert("שגיאה: " + (data.detail || "נתונים לא תקינים"));
+    } else {
+      alert("נרשם בהצלחה!");
+      // איפוס שדות בסיסי
+      document.getElementById('reg_name').value = "";
+      document.getElementById('reg_id').value = "";
+      document.getElementById('reg_class').value = "";
+    }
+  } catch (e) {
+    alert("שגיאה בחיבור לשרת");
+  }
+}
+
+   async function fetchData(mode) {
+  const authId = document.getElementById('auth_id').value;
+  const studentId = document.getElementById('search_student_id').value;
+  const teacherId = document.getElementById('search_teacher_id').value;
+  const table = document.getElementById('res_table');
+  const tbody = document.getElementById('res_body');
+  const msg = document.getElementById('status_msg');
+
+  if (!authId) { alert("חובה להזין תז מורה לאימות!"); return; }
+
+  try {
+    let results = [];
+
+    if (mode === 'all') {
+      // 1. שליפת כל התלמידות
+      const resStudents = await fetch(`${API_URL}/students/?teacher_identity_number=${authId}`);
+      const students = await resStudents.json();
+      
+      // 2. שליפת כל המורות (בהנחה שיש לך נתיב כזה ב-main.py)
+      const resTeachers = await fetch(`${API_URL}/teachers/?teacher_identity_number=${authId}`);
+      const teachers = await resTeachers.json();
+
+      if (!resStudents.ok || !resTeachers.ok) {
+        msg.innerText = "שגיאה בשליפת המאגר. ודאי שאת מורה מורשית.";
+        table.style.display = "none";
+        return;
+      }
+      
+      // איחוד הרשימות לרשימה אחת גדולה
+      results = [...teachers, ...students];
+    } 
+    else if (mode === 'student_spec') {
+      const r = await fetch(`${API_URL}/students/${studentId}?teacher_identity_number=${authId}`);
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail);
+      results = [data];
+    } 
+    else if (mode === 'teacher_spec') {
+      const r = await fetch(`${API_URL}/teachers/${teacherId}?teacher_identity_number=${authId}`);
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail);
+      results = [data];
+    } 
+    else if (mode === 'my_class') {
+      const r = await fetch(`${API_URL}/teachers/by-identity/${authId}/students?teacher_identity_number=${authId}`);
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail);
+      results = data;
+    }
+
+    // הצגת הנתונים בטבלה
+    tbody.innerHTML = "";
+    results.forEach(item => {
+      tbody.innerHTML += `<tr><td>${item.full_name}</td><td>${item.identity_number}</td><td>${item.class_name}</td></tr>`;
+    });
+    table.style.display = "table";
+    msg.innerText = "נמצאו " + results.length + " רשומות.";
+
+  } catch (e) {
+    msg.innerText = "שגיאה: " + e.message;
+    table.style.display = "none";
+  }
+}
+  </script>
+</body>
+</html>

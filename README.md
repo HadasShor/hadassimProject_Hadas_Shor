@@ -109,7 +109,7 @@ Access to GET endpoints is restricted and requires teacher ID verification.
 ![Student View](screenshots/stud_p.png)
 ![Class View](screenshots/class.png)
 ![All Students](screenshots/all.png)
-![](screenshot/error.png)
+![error](screenshot/error.png)
 
 
 

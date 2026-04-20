@@ -113,5 +113,3 @@ Each teacher can only access students belonging to their own class.
 ### Simplicity
 
 The system is designed to be clear and focused, demonstrating proper backend–database integration and API design.
-
-

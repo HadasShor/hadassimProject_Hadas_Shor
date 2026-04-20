@@ -91,12 +91,12 @@ Access to GET endpoints is restricted and requires teacher ID verification.
 ### Student Registration Form
 ![Student Form](screenshots/student_reg.png)
 ### Teacher Registration Form
-![Teacher Form](screenshots/teach_reg.png
+![Teacher Form](screenshots/teach_reg.png)
 ### Teacher View
-![]screenshots\teach_p.png)
-![]screenshots\stud_p.png)
-![](screenshots\class.png)
-![](screenshots\all.png)
+![Teacher View](screenshots/teach_p.png)
+![Student View](screenshots/stud_p.png)
+![Class View](screenshots/class.png)
+![All Students](screenshots/all.png)
 
 
 

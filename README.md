@@ -60,24 +60,36 @@ hadassim_db
 
 Create a `.env` file and configure:
 DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/hadassim_db
-
-
-### 2. Install Dependencies
+### 2. Create Virtual Environment
+python -m venv venv
+Activate it:
+venv\Scripts\activate
+### 3. Install Dependencies
 
 pip install -r requirements.txt
 
-### 3. Run the Server
+### 4. Run the Server
+cd backend
 uvicorn main:app --reload
 
 The server will be available at:
 
 http://127.0.0.1:8000
-### 4. Run the Frontend
+### 5. Test the Backend
+Open in browser:
+http://127.0.0.1:8000/docs
+You can test all API endpoints from there.
+### 6. Run the Frontend
 
 Open index.html in your browser
 or run:
 
 python -m http.server 5500
+### 7. Important Notes
+The backend must be running before using the frontend
+The frontend communicates with the backend via HTTP requests
+CORS is enabled to allow communication between frontend and backend
+Make sure PostgreSQL is running before starting the server
 
 ###  API Endpoints
 Method	Endpoint	Description

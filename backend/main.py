@@ -170,7 +170,6 @@ def get_teacher(
     return teacher
 
 
-# פונקציית עזר להמרת קואורדינטות
 def dms_to_decimal(degrees, minutes, seconds):
     return float(degrees) + (float(minutes) / 60) + (float(seconds) / 3600)
 
@@ -188,24 +187,21 @@ def receive_location(loc: schemas.LocationIn, db: Session = Depends(get_db)):
         loc.Coordinates.Longitude.Seconds
     )
 
-    # 2. הבדיקה המתוקנת: חיפוש בשתי הטבלאות
+    
     # קודם נבדוק אם זו תלמידה
     user = db.query(models.Student).filter(models.Student.identity_number == loc.ID).first()
     
-    # אם לא נמצאה תלמידה, נבדוק אם זו מורה
+    # אם לא נמצאה תלמידה נבדוק אם זו מורה
     if not user:
         user = db.query(models.Teacher).filter(models.Teacher.identity_number == loc.ID).first()
     
-    # רק אם לא נמצא אף אחד בשתי הטבלאות - נחזיר שגיאה
+    # רק אם לא נמצא אף אחד בשתי הטבלאות שגיאה
     if not user:
         raise HTTPException(
             status_code=404, 
             detail=f"User with ID {loc.ID} not found in Students or Teachers."
         )
 
-    # 3. שמירת המיקום בטבלה המשותפת
-    # שימי לב: ב-models.py הגדרת את student_id כעמודה שמקבלת מחרוזת,
-    # אז זה יעבוד גם עבור ID של מורה.
     new_location = models.StudentLocation(
         student_id=loc.ID,
         latitude=lat,
@@ -223,13 +219,13 @@ def receive_location(loc: schemas.LocationIn, db: Session = Depends(get_db)):
 def get_latest_locations(db: Session = Depends(get_db)):
     from sqlalchemy import func
     
-    # שלב א': מציאת זמן העדכון המקסימלי לכל תלמידה
+    #  מציאת זמן העדכון המקסימלי לכל תלמידה
     subquery = db.query(
         models.StudentLocation.student_id,
         func.max(models.StudentLocation.timestamp).label('max_ts')
     ).group_by(models.StudentLocation.student_id).subquery()
 
-    # שלב ב': שליפת השורות המלאות שתואמות לזמנים שמצאנו
+    #  שליפת השורות המלאות שתואמות לזמנים שמצאנו
     latest_locs = db.query(models.StudentLocation).join(
         subquery, 
         (models.StudentLocation.student_id == subquery.c.student_id) & 
@@ -252,12 +248,11 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 @app.get("/teachers/{teacher_id}/alerts")
 def get_teacher_alerts(teacher_id: str, db: Session = Depends(get_db)):
-    # 1. מציאת המורה כדי לדעת איזו כיתה היא מלמדת
     teacher = db.query(models.Teacher).filter(models.Teacher.identity_number == teacher_id).first()
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
 
-    # 2. מציאת המיקום האחרון של המורה
+    #  מציאת המיקום האחרון של המורה
     teacher_loc = db.query(models.StudentLocation).filter(
         models.StudentLocation.student_id == teacher_id
     ).order_by(models.StudentLocation.timestamp.desc()).first()
@@ -265,7 +260,7 @@ def get_teacher_alerts(teacher_id: str, db: Session = Depends(get_db)):
     if not teacher_loc:
         return {"alerts": [], "message": "No location found for teacher"}
 
-    # 3. מציאת כל התלמידות שרשומות באותה כיתה של המורה
+    # מציאת כל התלמידות שרשומות באותה כיתה של המורה
     students = db.query(models.Student).filter(models.Student.class_name == teacher.class_name).all()
     
     alerts = []
@@ -276,10 +271,9 @@ def get_teacher_alerts(teacher_id: str, db: Session = Depends(get_db)):
         ).order_by(models.StudentLocation.timestamp.desc()).first()
 
         if s_loc:
-            # שימוש בפונקציית calculate_distance שכבר קיימת אצלך
             dist = calculate_distance(teacher_loc.latitude, teacher_loc.longitude, s_loc.latitude, s_loc.longitude)
             
-            # אם המרחק גדול מ-3 ק"מ (דרישת הבונוס)
+            # אם המרחק גדול מ-3 ק"מ
             if dist > 3:
                 alerts.append({
                     "student_id": student.identity_number,

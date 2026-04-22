@@ -73,7 +73,6 @@
   <script>
     const API_URL = "http://127.0.0.1:8000";
 
-    // --- פונקציות שלב א' (הקוד המקורי שלך ללא שינוי) ---
     async function register(type) {
       const nameVal = document.getElementById('reg_name').value;
       const idVal = document.getElementById('reg_id').value;
@@ -156,7 +155,6 @@
       }
     }
 
-    // --- פונקציות שלב ב' (המפה) ---
 
     // אתחול המפה
     let map = L.map('map').setView([32.0853, 34.7818], 12);
@@ -168,7 +166,6 @@
 
 
  async function updateMap() {
-    // 1. קבלת ה-ID של המורה מהשדה שהוספת
     const teacherId = document.getElementById('teacher_id_input').value;
 
     try {
@@ -195,7 +192,7 @@
             if (alertData.alerts && alertData.alerts.length > 0) {
                 alertData.alerts.forEach(alert => {
                     if (markers[alert.student_id]) {
-                        // צביעת המרקר באדום באמצעות פילטר CSS
+                        // צביעת המרקר באדום באמצעות פילטר 
                         markers[alert.student_id]._icon.style.filter = "hue-rotate(120deg) saturate(3) brightness(0.8)";
                         
                         markers[alert.student_id].bindPopup(

@@ -56,10 +56,10 @@ The system supports:
 ### 1. Database Configuration
 
 Create a PostgreSQL database named: 
-hadassim_db
+hadassim_db_1
 
 Create a `.env` file and configure:
-DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/hadassim_db
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/hadassim_db_1
 ### 2. Create Virtual Environment
 python -m venv venv
 Activate it:
@@ -189,3 +189,63 @@ In this phase, the system was expanded to include real-time geographical trackin
 
 - **Latest Location Logic**: To maintain performance, the map only renders the most recent coordinate for each ID, preventing clutter from historical data.
 - **DMS Format**: The decision to use Degrees/Minutes/Seconds in the API was made to simulate professional GPS device integration.
+
+
+
+## Phase C: Teacher’s Safety & Alert System (Bonus)
+
+This final phase introduces a safety intelligence layer, enabling teachers to monitor their class and receive automatic alerts when students move beyond a defined safe distance.
+
+---
+
+### Core Features (Phase C)
+
+#### Smart Proximity Alerts
+- **Dynamic Distance Calculation**: Uses the Haversine formula to calculate real-time aerial distance between a teacher and their students.
+- **Safety Perimeter**: A "Too Far" alert is triggered when a student exceeds a 3 km radius from their teacher.
+- **Visual Warnings**: When a teacher enters their ID, the map highlights out-of-range students using red markers with descriptive popups.
+
+#### Class-Based Monitoring
+- **Automatic Filtering**: The system identifies the teacher’s class and monitors only the relevant students instead of all participants.
+
+---
+
+### API Endpoints (Bonus Update)
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| GET | `/teachers/{id}/alerts` | Returns students located more than 3 km away from the specified teacher |
+
+---
+
+### How to Use the Alert System
+
+1. **Teacher Identification**  
+   In the "Teacher Control Center" section on the map, enter the teacher's ID (e.g., `1111`).
+
+2. **Activate Monitoring**  
+   Click **"Update Locations & Alerts"**.
+
+3. **Monitor Results**  
+   - **Blue Markers**: Students within the 3 km safe zone  
+   - **Purpule Markers**: Students outside the safe zone  
+     Click on a red marker to see the exact distance from the teacher.
+
+---
+
+### Safety System Preview (Phase C)
+
+#### Proximity Alert Example  
+
+![Live Map](screenshots/c1.png)
+
+
+![Live Map](screenshots/c2.png)
+
+---
+
+### Design Decisions & Assumptions
+
+- **Teacher-Centric Logic**: The teacher’s last known location serves as the anchor point for all distance calculations. If no location is available, alerts cannot be generated.
+- **3 km Threshold**: Defined based on typical school safety guidelines for supervised trips.
+- **Performance Optimization**: Distance calculations are handled on the backend to ensure a smooth and responsive map interface.

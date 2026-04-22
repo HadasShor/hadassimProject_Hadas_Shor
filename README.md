@@ -237,10 +237,10 @@ This final phase introduces a safety intelligence layer, enabling teachers to mo
 
 #### Proximity Alert Example  
 
-![Live Map](screenshots\c1.png)
+![Live Map1](screenshots/c1.png)
 
 
-![Live Map](screenshots\c2.png)
+![Live Map2](screenshots/c2.png)
 
 ---
 

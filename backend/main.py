@@ -4,10 +4,10 @@ from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
-
 import schemas
-
+import math
 models.Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI()
 
@@ -168,3 +168,81 @@ def get_teacher(
         raise HTTPException(status_code=404, detail="Teacher not found")
 
     return teacher
+
+
+# פונקציית עזר להמרת קואורדינטות
+def dms_to_decimal(degrees, minutes, seconds):
+    return float(degrees) + (float(minutes) / 60) + (float(seconds) / 3600)
+
+@app.post("/locations")
+def receive_location(loc: schemas.LocationIn, db: Session = Depends(get_db)):
+    # 1. המרת קואורדינטות (נשאר כפי שכתבת)
+    lat = dms_to_decimal(
+        loc.Coordinates.Latitude.Degrees,
+        loc.Coordinates.Latitude.Minutes,
+        loc.Coordinates.Latitude.Seconds
+    )
+    lon = dms_to_decimal(
+        loc.Coordinates.Longitude.Degrees,
+        loc.Coordinates.Longitude.Minutes,
+        loc.Coordinates.Longitude.Seconds
+    )
+
+    # 2. הבדיקה החדשה: חיפוש המשתמש בסטודנטים או במורים
+    # מחפשים בטבלת סטודנטים
+    user_exists = db.query(models.Student).filter(models.Student.identity_number == loc.ID).first()
+    
+    # אם לא נמצא, מחפשים בטבלת מורים
+    if not user_exists:
+        user_exists = db.query(models.Teacher).filter(models.Teacher.identity_number == loc.ID).first()
+    
+    # אם המשתמש לא קיים באף אחת מהטבלאות - מחזירים שגיאה
+    if not user_exists:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"User with ID {loc.ID} not found. Please register first."
+        )
+
+    # 3. שמירת המיקום (שימוש ב-models.StudentLocation כפי שהגדרת)
+    new_location = models.StudentLocation(
+        student_id=loc.ID,
+        latitude=lat,
+        longitude=lon,
+        timestamp=loc.Time
+    )
+    
+    db.add(new_location)
+    db.commit()
+    db.refresh(new_location)
+    
+    return new_location
+
+@app.get("/locations/latest")
+def get_latest_locations(db: Session = Depends(get_db)):
+    from sqlalchemy import func
+    
+    # שלב א': מציאת זמן העדכון המקסימלי לכל תלמידה
+    subquery = db.query(
+        models.StudentLocation.student_id,
+        func.max(models.StudentLocation.timestamp).label('max_ts')
+    ).group_by(models.StudentLocation.student_id).subquery()
+
+    # שלב ב': שליפת השורות המלאות שתואמות לזמנים שמצאנו
+    latest_locs = db.query(models.StudentLocation).join(
+        subquery, 
+        (models.StudentLocation.student_id == subquery.c.student_id) & 
+        (models.StudentLocation.timestamp == subquery.c.max_ts)
+    ).all()
+    
+    return latest_locs
+
+
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    R = 6371.0 
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c

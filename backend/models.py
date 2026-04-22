@@ -1,6 +1,19 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String,Float, DateTime, ForeignKey
 from database import Base
 
+from sqlalchemy.sql import func
+
+
+class StudentLocation(Base):
+    __tablename__ = "student_locations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    # שורה שצריך לשנות: במקום ForeignKey("students.identity_number")
+    # פשוט הגדירי את זה כעמודה רגילה:
+    student_id = Column(String) 
+    latitude = Column(Float)
+    longitude = Column(Float)
+    timestamp = Column(DateTime(timezone=True))
 
 class Student(Base):
     __tablename__ = "students"

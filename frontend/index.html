@@ -166,87 +166,81 @@
 
     let markers = {};
 
-    async function updateMap() {
-    try {
-        const response = await fetch(`${API_URL}/locations/latest`);
-        if (!response.ok) return;
-        const locations = await response.json();
+//     async function updateMap() {
+//     try {
+//         const response = await fetch(`${API_URL}/locations/latest`);
+//         if (!response.ok) return;
+//         const locations = await response.json();
         
-        console.log("נתונים שהתקבלו מהשרת:", locations); // זה יעזור לנו לדבג
+//         console.log("נתונים שהתקבלו מהשרת:", locations); // זה יעזור לנו לדבג
 
+//         locations.forEach(loc => {
+//             // ודאי שהשמות כאן תואמים ל-JSON ששלחת לי (latitude ו-longitude)
+//             const pos = [loc.latitude, loc.longitude];
+//             const id = loc.student_id;
+
+//             if (markers[id]) {
+//                 // הזזת סמן קיים
+//                 markers[id].setLatLng(pos);
+//             } else {
+//                 // יצירת סמן חדש
+//                 markers[id] = L.marker(pos)
+//                     .addTo(map)
+//                     .bindPopup(`תלמידה: ${id}`);
+//             }
+//         });
+//     } catch (err) {
+//         console.error("שגיאה בעדכון המפה:", err);
+//     }
+// }
+ async function updateMap() {
+    // 1. קבלת ה-ID של המורה מהשדה שהוספת
+    const teacherId = document.getElementById('teacher_id_input').value;
+
+    try {
+        // 2. משיכת כל המיקומים האחרונים (כפי שמופיע ב-main.py שלך בנתיב /locations/latest)
+        const response = await fetch(`${API_URL}/locations/latest`);
+        const locations = await response.json();
+
+        // 3. הצגת המרקרים על המפה
         locations.forEach(loc => {
-            // ודאי שהשמות כאן תואמים ל-JSON ששלחת לי (latitude ו-longitude)
             const pos = [loc.latitude, loc.longitude];
-            const id = loc.student_id;
-
-            if (markers[id]) {
-                // הזזת סמן קיים
-                markers[id].setLatLng(pos);
+            
+            if (markers[loc.student_id]) {
+                markers[loc.student_id].setLatLng(pos);
             } else {
-                // יצירת סמן חדש
-                markers[id] = L.marker(pos)
-                    .addTo(map)
-                    .bindPopup(`תלמידה: ${id}`);
+                markers[loc.student_id] = L.marker(pos).addTo(map).bindPopup(`מזהה: ${loc.student_id}`);
             }
+            
+            // איפוס עיצוב (למקרה שהייתה אזהרה קודמת והיא נפתרה)
+            markers[loc.student_id]._icon.style.filter = "none";
         });
+
+        // 4. לוגיקת הבונוס: אם המורה הזינה ID, נבדוק התראות
+        if (teacherId) {
+            const alertRes = await fetch(`${API_URL}/teachers/${teacherId}/alerts`);
+            const alertData = await alertRes.json();
+
+            if (alertData.alerts && alertData.alerts.length > 0) {
+                alertData.alerts.forEach(alert => {
+                    if (markers[alert.student_id]) {
+                        // צביעת המרקר באדום באמצעות פילטר CSS
+                        markers[alert.student_id]._icon.style.filter = "hue-rotate(120deg) saturate(3) brightness(0.8)";
+                        
+                        // הוספת פופ-אפ עם מרחק
+                        markers[alert.student_id].bindPopup(
+                            `<b style="color:red;">חריגת מרחק!</b><br>` +
+                            `שם: ${alert.student_name}<br>` +
+                            `מרחק מהמורה: ${alert.distance} ק"מ`
+                        ).openPopup();
+                    }
+                });
+            }
+        }
     } catch (err) {
         console.error("שגיאה בעדכון המפה:", err);
     }
 }
-    // async function updateMap() {
-    //     const teacherId = document.getElementById('teacher_id_input').value;
-    //     if (!teacherId) {
-    //         alert("אנא הזיני תעודת זהות של מורה כדי לבדוק מרחקים");
-    //         return;
-    //     }
-
-    //     try {
-    //         const response = await fetch(`${API_URL}/locations/latest`);
-    //         const locations = await response.json();
-
-    //         // 1. מציאת מיקום המורה מתוך הרשימה
-    //         const teacherData = locations.find(loc => loc.student_id === teacherId);
-            
-    //         if (!teacherData) {
-    //             console.log("לא נמצא מיקום עדכני למורה זו בבסיס הנתונים");
-    //             return;
-    //         }
-
-    //         const teacherLatLng = L.latLng(teacherData.latitude, teacherData.longitude);
-
-    //         // 2. מעבר על כל שאר המיקומים (התלמידות)
-    //         locations.forEach(loc => {
-    //             if (loc.student_id === teacherId) return; // דלגי על המורה עצמה
-
-    //             const studentLatLng = L.latLng(loc.latitude, loc.longitude);
-    //             const distanceKm = (teacherLatLng.distanceTo(studentLatLng) / 1000).toFixed(2);
-
-    //             let popupContent = `תלמידה: ${loc.student_id}<br>מרחק מהמורה: ${distanceKm} ק"מ`;
-                
-    //             // בדיקת הבונוס: התרחקות מעל 3 ק"מ
-    //             if (distanceKm > 3) {
-    //                 popupContent = `<b style="color:red;">⚠️ אזהרה: רחוקה מדי!</b><br>` + popupContent;
-    //                 // כאן את יכולה להוסיף קוד לשינוי האייקון לאדום
-    //             }
-
-    //             if (markers[loc.student_id]) {
-    //                 markers[loc.student_id].setLatLng(studentLatLng).setPopupContent(popupContent);
-    //             } else {
-    //                 markers[loc.student_id] = L.marker(studentLatLng).addTo(map).bindPopup(popupContent);
-    //             }
-    //         });
-
-            // עדכון סמן המורה בצבע שונה (אופציונלי)
-    //         if (markers[teacherId]) {
-    //             markers[teacherId].setLatLng(teacherLatLng).setPopupContent("<b>מיקומך (המורה)</b>");
-    //         } else {
-    //             markers[teacherId] = L.circleMarker(teacherLatLng, {color: 'green', radius: 10}).addTo(map).bindPopup("המורה");
-    //         }
-
-    //     } catch (err) {
-    //         console.error("שגיאה:", err);
-    //     }
-    // }
 
     // עדכון כל 60 שניות לפי דרישת המטלה 
     updateMap();

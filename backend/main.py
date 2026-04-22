@@ -176,7 +176,7 @@ def dms_to_decimal(degrees, minutes, seconds):
 
 @app.post("/locations")
 def receive_location(loc: schemas.LocationIn, db: Session = Depends(get_db)):
-    # 1. המרת קואורדינטות (נשאר כפי שכתבת)
+    # 1. המרת קואורדינטות (כמו שכבר עשית)
     lat = dms_to_decimal(
         loc.Coordinates.Latitude.Degrees,
         loc.Coordinates.Latitude.Minutes,
@@ -188,22 +188,24 @@ def receive_location(loc: schemas.LocationIn, db: Session = Depends(get_db)):
         loc.Coordinates.Longitude.Seconds
     )
 
-    # 2. הבדיקה החדשה: חיפוש המשתמש בסטודנטים או במורים
-    # מחפשים בטבלת סטודנטים
-    user_exists = db.query(models.Student).filter(models.Student.identity_number == loc.ID).first()
+    # 2. הבדיקה המתוקנת: חיפוש בשתי הטבלאות
+    # קודם נבדוק אם זו תלמידה
+    user = db.query(models.Student).filter(models.Student.identity_number == loc.ID).first()
     
-    # אם לא נמצא, מחפשים בטבלת מורים
-    if not user_exists:
-        user_exists = db.query(models.Teacher).filter(models.Teacher.identity_number == loc.ID).first()
+    # אם לא נמצאה תלמידה, נבדוק אם זו מורה
+    if not user:
+        user = db.query(models.Teacher).filter(models.Teacher.identity_number == loc.ID).first()
     
-    # אם המשתמש לא קיים באף אחת מהטבלאות - מחזירים שגיאה
-    if not user_exists:
+    # רק אם לא נמצא אף אחד בשתי הטבלאות - נחזיר שגיאה
+    if not user:
         raise HTTPException(
             status_code=404, 
-            detail=f"User with ID {loc.ID} not found. Please register first."
+            detail=f"User with ID {loc.ID} not found in Students or Teachers."
         )
 
-    # 3. שמירת המיקום (שימוש ב-models.StudentLocation כפי שהגדרת)
+    # 3. שמירת המיקום בטבלה המשותפת
+    # שימי לב: ב-models.py הגדרת את student_id כעמודה שמקבלת מחרוזת,
+    # אז זה יעבוד גם עבור ID של מורה.
     new_location = models.StudentLocation(
         student_id=loc.ID,
         latitude=lat,
@@ -246,3 +248,45 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     a = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)**2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
+
+
+@app.get("/teachers/{teacher_id}/alerts")
+def get_teacher_alerts(teacher_id: str, db: Session = Depends(get_db)):
+    # 1. מציאת המורה כדי לדעת איזו כיתה היא מלמדת
+    teacher = db.query(models.Teacher).filter(models.Teacher.identity_number == teacher_id).first()
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+
+    # 2. מציאת המיקום האחרון של המורה
+    teacher_loc = db.query(models.StudentLocation).filter(
+        models.StudentLocation.student_id == teacher_id
+    ).order_by(models.StudentLocation.timestamp.desc()).first()
+
+    if not teacher_loc:
+        return {"alerts": [], "message": "No location found for teacher"}
+
+    # 3. מציאת כל התלמידות שרשומות באותה כיתה של המורה
+    students = db.query(models.Student).filter(models.Student.class_name == teacher.class_name).all()
+    
+    alerts = []
+    for student in students:
+        # מציאת המיקום האחרון של התלמידה
+        s_loc = db.query(models.StudentLocation).filter(
+            models.StudentLocation.student_id == student.identity_number
+        ).order_by(models.StudentLocation.timestamp.desc()).first()
+
+        if s_loc:
+            # שימוש בפונקציית calculate_distance שכבר קיימת אצלך
+            dist = calculate_distance(teacher_loc.latitude, teacher_loc.longitude, s_loc.latitude, s_loc.longitude)
+            
+            # אם המרחק גדול מ-3 ק"מ (דרישת הבונוס)
+            if dist > 3:
+                alerts.append({
+                    "student_id": student.identity_number,
+                    "student_name": student.full_name,
+                    "distance": round(dist, 2),
+                    "lat": s_loc.latitude,
+                    "lon": s_loc.longitude
+                })
+
+    return {"alerts": alerts}

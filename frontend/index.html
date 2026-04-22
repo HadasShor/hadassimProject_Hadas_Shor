@@ -2,12 +2,20 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>ניהול טיול שנתי</title>
+  <title>ניהול טיול שנתי - שלב א' + ב'</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    .section { border: 1px solid black; padding: 10px; margin-bottom: 10px; }
+    #map { height: 400px; width: 100%; margin-top: 20px; border: 2px solid #333; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid black; padding: 8px; text-align: center; }
+  </style>
 </head>
 <body>
   <h1>מערכת ניהול טיול שנתי</h1>
 
-  <div style="border: 1px solid black; padding: 10px; margin-bottom: 10px;">
+  <div class="section">
     <h3>רישום (תלמידה/מורה)</h3>
     שם: <input type="text" id="reg_name"> 
     ת"ז: <input type="text" id="reg_id"> 
@@ -16,11 +24,11 @@
     <button onclick="register('teachers')">רשמי מורה</button>
   </div>
 
-  <div style="border: 1px solid black; padding: 10px;">
+  <div class="section">
     <h3>אזור מורה - חיפוש ושליפה</h3>
     
     <strong>1. אימות מורה:</strong> 
-    <input type="text" id="auth_id" placeholder="ת"ז מורה מאמתת">
+    <input type="text" id="auth_id" placeholder="תז מורה מאמתת">
     <hr>
 
     <strong>2. אפשרויות חיפוש:</strong><br><br>
@@ -50,109 +58,200 @@
     </table>
   </div>
 
+  <div class="section">
+    <h3>מערכת איכון תלמידות - מפה</h3>
+    <div style="border: 1px solid blue; padding: 10px; margin-bottom: 10px;">
+        <h3>מעקב מרחק מורה</h3>
+        הזיני ת"ז מורה: <input type="text" id="teacher_id_input" placeholder="למשל 123456">
+        <button onclick="updateMap()">עדכן מיקומים והתראות</button>
+    </div>
+        <div id="map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <script>
     const API_URL = "http://127.0.0.1:8000";
 
-   async function register(type) {
-  // איסוף הנתונים מה-Inputs לפי ה-id שלהם
-  const nameVal = document.getElementById('reg_name').value;
-  const idVal = document.getElementById('reg_id').value;
-  const classVal = document.getElementById('reg_class').value;
+    // --- פונקציות שלב א' (הקוד המקורי שלך ללא שינוי) ---
+    async function register(type) {
+      const nameVal = document.getElementById('reg_name').value;
+      const idVal = document.getElementById('reg_id').value;
+      const classVal = document.getElementById('reg_class').value;
 
-  // ודאי שהשמות כאן זהים בדיוק למה שמופיע ב-schemas.TeacherCreate
-  const payload = {
-    full_name: nameVal,
-    identity_number: idVal,
-    class_name: classVal
-  };
+      const payload = {
+        full_name: nameVal,
+        identity_number: idVal,
+        class_name: classVal
+      };
 
-  try {
-    const r = await fetch(`${API_URL}/${type}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await r.json();
-
-    if (!r.ok) {
-      // כאן תקבלי את ההודעה "Teacher already exists" אם המורה קיימת
-      alert("שגיאה: " + (data.detail || "נתונים לא תקינים"));
-    } else {
-      alert("נרשם בהצלחה!");
-      // איפוס שדות בסיסי
-      document.getElementById('reg_name').value = "";
-      document.getElementById('reg_id').value = "";
-      document.getElementById('reg_class').value = "";
-    }
-  } catch (e) {
-    alert("שגיאה בחיבור לשרת");
-  }
-}
-
-   async function fetchData(mode) {
-  const authId = document.getElementById('auth_id').value;
-  const studentId = document.getElementById('search_student_id').value;
-  const teacherId = document.getElementById('search_teacher_id').value;
-  const table = document.getElementById('res_table');
-  const tbody = document.getElementById('res_body');
-  const msg = document.getElementById('status_msg');
-
-  if (!authId) { alert("חובה להזין תז מורה לאימות!"); return; }
-
-  try {
-    let results = [];
-
-    if (mode === 'all') {
-      // 1. שליפת כל התלמידות
-      const resStudents = await fetch(`${API_URL}/students/?teacher_identity_number=${authId}`);
-      const students = await resStudents.json();
-      
-      // 2. שליפת כל המורות (בהנחה שיש לך נתיב כזה ב-main.py)
-      const resTeachers = await fetch(`${API_URL}/teachers/?teacher_identity_number=${authId}`);
-      const teachers = await resTeachers.json();
-
-      if (!resStudents.ok || !resTeachers.ok) {
-        msg.innerText = "שגיאה בשליפת המאגר. ודאי שאת מורה מורשית.";
-        table.style.display = "none";
-        return;
+      try {
+        const r = await fetch(`${API_URL}/${type}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await r.json();
+        if (!r.ok) {
+          alert("שגיאה: " + (data.detail || "נתונים לא תקינים"));
+        } else {
+          alert("נרשם בהצלחה!");
+          document.getElementById('reg_name').value = "";
+          document.getElementById('reg_id').value = "";
+          document.getElementById('reg_class').value = "";
+        }
+      } catch (e) {
+        alert("שגיאה בחיבור לשרת");
       }
-      
-      // איחוד הרשימות לרשימה אחת גדולה
-      results = [...teachers, ...students];
-    } 
-    else if (mode === 'student_spec') {
-      const r = await fetch(`${API_URL}/students/${studentId}?teacher_identity_number=${authId}`);
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.detail);
-      results = [data];
-    } 
-    else if (mode === 'teacher_spec') {
-      const r = await fetch(`${API_URL}/teachers/${teacherId}?teacher_identity_number=${authId}`);
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.detail);
-      results = [data];
-    } 
-    else if (mode === 'my_class') {
-      const r = await fetch(`${API_URL}/teachers/by-identity/${authId}/students?teacher_identity_number=${authId}`);
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.detail);
-      results = data;
     }
 
-    // הצגת הנתונים בטבלה
-    tbody.innerHTML = "";
-    results.forEach(item => {
-      tbody.innerHTML += `<tr><td>${item.full_name}</td><td>${item.identity_number}</td><td>${item.class_name}</td></tr>`;
-    });
-    table.style.display = "table";
-    msg.innerText = "נמצאו " + results.length + " רשומות.";
+    async function fetchData(mode) {
+      const authId = document.getElementById('auth_id').value;
+      const studentId = document.getElementById('search_student_id').value;
+      const teacherId = document.getElementById('search_teacher_id').value;
+      const table = document.getElementById('res_table');
+      const tbody = document.getElementById('res_body');
+      const msg = document.getElementById('status_msg');
 
-  } catch (e) {
-    msg.innerText = "שגיאה: " + e.message;
-    table.style.display = "none";
-  }
+      if (!authId) { alert("חובה להזין תז מורה לאימות!"); return; }
+
+      try {
+        let results = [];
+
+        if (mode === 'all') {
+          const resStudents = await fetch(`${API_URL}/students/?teacher_identity_number=${authId}`);
+          const resTeachers = await fetch(`${API_URL}/teachers/?teacher_identity_number=${authId}`);
+          if (!resStudents.ok || !resTeachers.ok) throw new Error("שגיאה בשליפה. ודאי שאת מורה מורשית.");
+          results = [...await resTeachers.json(), ...await resStudents.json()];
+        } 
+        else if (mode === 'student_spec') {
+          const r = await fetch(`${API_URL}/students/${studentId}?teacher_identity_number=${authId}`);
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.detail);
+          results = [data];
+        } 
+        else if (mode === 'teacher_spec') {
+          const r = await fetch(`${API_URL}/teachers/${teacherId}?teacher_identity_number=${authId}`);
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.detail);
+          results = [data];
+        } 
+        else if (mode === 'my_class') {
+          const r = await fetch(`${API_URL}/teachers/by-identity/${authId}/students?teacher_identity_number=${authId}`);
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.detail);
+          results = data;
+        }
+
+        tbody.innerHTML = "";
+        results.forEach(item => {
+          tbody.innerHTML += `<tr><td>${item.full_name}</td><td>${item.identity_number}</td><td>${item.class_name}</td></tr>`;
+        });
+        table.style.display = "table";
+        msg.innerText = "נמצאו " + results.length + " רשומות.";
+
+      } catch (e) {
+        msg.innerText = "שגיאה: " + e.message;
+        table.style.display = "none";
+      }
+    }
+
+    // --- פונקציות שלב ב' (המפה) ---
+
+    // אתחול המפה
+    let map = L.map('map').setView([32.0853, 34.7818], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let markers = {};
+
+    async function updateMap() {
+    try {
+        const response = await fetch(`${API_URL}/locations/latest`);
+        if (!response.ok) return;
+        const locations = await response.json();
+        
+        console.log("נתונים שהתקבלו מהשרת:", locations); // זה יעזור לנו לדבג
+
+        locations.forEach(loc => {
+            // ודאי שהשמות כאן תואמים ל-JSON ששלחת לי (latitude ו-longitude)
+            const pos = [loc.latitude, loc.longitude];
+            const id = loc.student_id;
+
+            if (markers[id]) {
+                // הזזת סמן קיים
+                markers[id].setLatLng(pos);
+            } else {
+                // יצירת סמן חדש
+                markers[id] = L.marker(pos)
+                    .addTo(map)
+                    .bindPopup(`תלמידה: ${id}`);
+            }
+        });
+    } catch (err) {
+        console.error("שגיאה בעדכון המפה:", err);
+    }
 }
+    // async function updateMap() {
+    //     const teacherId = document.getElementById('teacher_id_input').value;
+    //     if (!teacherId) {
+    //         alert("אנא הזיני תעודת זהות של מורה כדי לבדוק מרחקים");
+    //         return;
+    //     }
+
+    //     try {
+    //         const response = await fetch(`${API_URL}/locations/latest`);
+    //         const locations = await response.json();
+
+    //         // 1. מציאת מיקום המורה מתוך הרשימה
+    //         const teacherData = locations.find(loc => loc.student_id === teacherId);
+            
+    //         if (!teacherData) {
+    //             console.log("לא נמצא מיקום עדכני למורה זו בבסיס הנתונים");
+    //             return;
+    //         }
+
+    //         const teacherLatLng = L.latLng(teacherData.latitude, teacherData.longitude);
+
+    //         // 2. מעבר על כל שאר המיקומים (התלמידות)
+    //         locations.forEach(loc => {
+    //             if (loc.student_id === teacherId) return; // דלגי על המורה עצמה
+
+    //             const studentLatLng = L.latLng(loc.latitude, loc.longitude);
+    //             const distanceKm = (teacherLatLng.distanceTo(studentLatLng) / 1000).toFixed(2);
+
+    //             let popupContent = `תלמידה: ${loc.student_id}<br>מרחק מהמורה: ${distanceKm} ק"מ`;
+                
+    //             // בדיקת הבונוס: התרחקות מעל 3 ק"מ
+    //             if (distanceKm > 3) {
+    //                 popupContent = `<b style="color:red;">⚠️ אזהרה: רחוקה מדי!</b><br>` + popupContent;
+    //                 // כאן את יכולה להוסיף קוד לשינוי האייקון לאדום
+    //             }
+
+    //             if (markers[loc.student_id]) {
+    //                 markers[loc.student_id].setLatLng(studentLatLng).setPopupContent(popupContent);
+    //             } else {
+    //                 markers[loc.student_id] = L.marker(studentLatLng).addTo(map).bindPopup(popupContent);
+    //             }
+    //         });
+
+            // עדכון סמן המורה בצבע שונה (אופציונלי)
+    //         if (markers[teacherId]) {
+    //             markers[teacherId].setLatLng(teacherLatLng).setPopupContent("<b>מיקומך (המורה)</b>");
+    //         } else {
+    //             markers[teacherId] = L.circleMarker(teacherLatLng, {color: 'green', radius: 10}).addTo(map).bindPopup("המורה");
+    //         }
+
+    //     } catch (err) {
+    //         console.error("שגיאה:", err);
+    //     }
+    // }
+
+    // עדכון כל 60 שניות לפי דרישת המטלה 
+    updateMap();
+    setInterval(updateMap, 60000);
+
   </script>
 </body>
 </html>

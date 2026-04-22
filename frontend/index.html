@@ -60,7 +60,7 @@
 
   <div class="section">
     <h3>מערכת איכון תלמידות - מפה</h3>
-    <div style="border: 1px solid blue; padding: 10px; margin-bottom: 10px;">
+    <div>
         <h3>מעקב מרחק מורה</h3>
         הזיני ת"ז מורה: <input type="text" id="teacher_id_input" placeholder="למשל 123456">
         <button onclick="updateMap()">עדכן מיקומים והתראות</button>
@@ -166,43 +166,16 @@
 
     let markers = {};
 
-//     async function updateMap() {
-//     try {
-//         const response = await fetch(`${API_URL}/locations/latest`);
-//         if (!response.ok) return;
-//         const locations = await response.json();
-        
-//         console.log("נתונים שהתקבלו מהשרת:", locations); // זה יעזור לנו לדבג
 
-//         locations.forEach(loc => {
-//             // ודאי שהשמות כאן תואמים ל-JSON ששלחת לי (latitude ו-longitude)
-//             const pos = [loc.latitude, loc.longitude];
-//             const id = loc.student_id;
-
-//             if (markers[id]) {
-//                 // הזזת סמן קיים
-//                 markers[id].setLatLng(pos);
-//             } else {
-//                 // יצירת סמן חדש
-//                 markers[id] = L.marker(pos)
-//                     .addTo(map)
-//                     .bindPopup(`תלמידה: ${id}`);
-//             }
-//         });
-//     } catch (err) {
-//         console.error("שגיאה בעדכון המפה:", err);
-//     }
-// }
  async function updateMap() {
     // 1. קבלת ה-ID של המורה מהשדה שהוספת
     const teacherId = document.getElementById('teacher_id_input').value;
 
     try {
-        // 2. משיכת כל המיקומים האחרונים (כפי שמופיע ב-main.py שלך בנתיב /locations/latest)
+      
         const response = await fetch(`${API_URL}/locations/latest`);
         const locations = await response.json();
 
-        // 3. הצגת המרקרים על המפה
         locations.forEach(loc => {
             const pos = [loc.latitude, loc.longitude];
             
@@ -212,11 +185,9 @@
                 markers[loc.student_id] = L.marker(pos).addTo(map).bindPopup(`מזהה: ${loc.student_id}`);
             }
             
-            // איפוס עיצוב (למקרה שהייתה אזהרה קודמת והיא נפתרה)
             markers[loc.student_id]._icon.style.filter = "none";
         });
 
-        // 4. לוגיקת הבונוס: אם המורה הזינה ID, נבדוק התראות
         if (teacherId) {
             const alertRes = await fetch(`${API_URL}/teachers/${teacherId}/alerts`);
             const alertData = await alertRes.json();
@@ -227,7 +198,6 @@
                         // צביעת המרקר באדום באמצעות פילטר CSS
                         markers[alert.student_id]._icon.style.filter = "hue-rotate(120deg) saturate(3) brightness(0.8)";
                         
-                        // הוספת פופ-אפ עם מרחק
                         markers[alert.student_id].bindPopup(
                             `<b style="color:red;">חריגת מרחק!</b><br>` +
                             `שם: ${alert.student_name}<br>` +

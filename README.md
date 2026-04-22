@@ -123,11 +123,6 @@ User authentication is simplified and based on verifying the provided ID against
 
 Each teacher can only access students belonging to their own class.
 
-### Simplicity
-
-The system is designed to be clear and focused, demonstrating proper backend–database integration and API design.
-
-
 ## Phase B: Real-Time Location Tracking System
 
 In this phase, the system was expanded to include real-time geographical tracking of participants using an interactive map interface and GPS data processing.
@@ -175,7 +170,7 @@ In this phase, the system was expanded to include real-time geographical trackin
 
 ---
 
-### System Preview (Phase B)
+### System Preview 
 
 #### Live Tracking Map
 ![Live Map](screenshots/mapA.png)
@@ -203,7 +198,7 @@ This final phase introduces a safety intelligence layer, enabling teachers to mo
 #### Smart Proximity Alerts
 - **Dynamic Distance Calculation**: Uses the Haversine formula to calculate real-time aerial distance between a teacher and their students.
 - **Safety Perimeter**: A "Too Far" alert is triggered when a student exceeds a 3 km radius from their teacher.
-- **Visual Warnings**: When a teacher enters their ID, the map highlights out-of-range students using red markers with descriptive popups.
+- **Visual Warnings**: When a teacher enters their ID, the map highlights out-of-range students using purpule markers with descriptive popups.
 
 #### Class-Based Monitoring
 - **Automatic Filtering**: The system identifies the teacher’s class and monitors only the relevant students instead of all participants.

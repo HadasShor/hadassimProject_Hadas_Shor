@@ -126,3 +126,66 @@ Each teacher can only access students belonging to their own class.
 ### Simplicity
 
 The system is designed to be clear and focused, demonstrating proper backend–database integration and API design.
+
+
+## Phase B: Real-Time Location Tracking System
+
+In this phase, the system was expanded to include real-time geographical tracking of participants using an interactive map interface and GPS data processing.
+
+### Core Features (Phase B)
+
+#### Real-Time Map Interface
+- Integrated **Leaflet.js** to provide an interactive map of Israel.
+- Dynamic markers that represent the last known location of each student and teacher.
+- Automatic UI updates: The map refreshes every 60 seconds to ensure data accuracy.
+
+#### Advanced GPS Data Processing
+- **DMS to Decimal Conversion**: The system accepts coordinates in Degrees, Minutes, and Seconds (DMS) format—simulating real GPS hardware—and converts them to Decimal Degrees for mapping.
+- **Location History**: The backend stores multiple location pings while the frontend intelligently fetches only the `latest` position for each user.
+
+
+---
+
+### New Technologies & Tools
+
+#### Mapping & GIS
+- **Leaflet.js**: An open-source JavaScript library for mobile-friendly interactive maps.
+- **OpenStreetMap**: Used as the base map layer provider.
+
+#### Backend Logic
+- **Geospatial Math**: Implementation of spherical geometry for distance tracking.
+- **Simulated Data Stream**: A Python simulation script to demonstrate live movement and map population.
+
+---
+
+### API Endpoints (Updated)
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| POST | `/locations` | Receive GPS data (DMS format) from tracking devices. |
+| GET | `/locations/latest` | Retrieve the most recent location for all active participants. |
+
+---
+
+### How to Use the Tracking System
+
+1. **Start the Backend**: Ensure your FastAPI server is running (`uvicorn main:app --reload`).
+2. **Populate Data**: Use the `simulator.py` script or Swagger UI to send location JSONs to the `/locations` endpoint.
+3. **Open the Map**: Refresh `index.html`. You will see blue markers appearing across the map.
+
+---
+
+### System Preview (Phase B)
+
+#### Live Tracking Map
+![Live Map](screenshots/mapA.png)
+
+
+![Live Map](screenshots/mapB.png)
+
+---
+
+### Design Decisions & Assumptions
+
+- **Latest Location Logic**: To maintain performance, the map only renders the most recent coordinate for each ID, preventing clutter from historical data.
+- **DMS Format**: The decision to use Degrees/Minutes/Seconds in the API was made to simulate professional GPS device integration.

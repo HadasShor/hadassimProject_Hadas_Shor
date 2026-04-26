@@ -112,7 +112,7 @@
       const tbody = document.getElementById('res_body');
       const msg = document.getElementById('status_msg');
 
-      if (!authId) { alert("חובה להזין תז מורה לאימות!"); return; }
+      if (!authId) { alert("חובה להזין תז מורה לאימות"); return; }
 
       try {
         let results = [];
@@ -136,7 +136,7 @@
           results = [data];
         } 
         else if (mode === 'my_class') {
-          const r = await fetch(`${API_URL}/teachers/by-identity/${authId}/students?teacher_identity_number=${authId}`);
+         const r = await fetch(`${API_URL}/teachers/my-class/students?teacher_identity_number=${authId}`);
           const data = await r.json();
           if (!r.ok) throw new Error(data.detail);
           results = data;

@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel#ספריה בפייתון שבודקת את שלמות הנתונים לפי ההגדרות שלי 
 from datetime import datetime
 
-
+#הגדרתי פה איך יראו הבקשות של קבצי גייסון שאני שולחת לשרת ומקבלת חזרה מהשרת
 class StudentCreate(BaseModel):
     full_name: str
     identity_number: str

@@ -92,10 +92,15 @@ CORS is enabled to allow communication between frontend and backend
 Make sure PostgreSQL is running before starting the server
 
 ###  API Endpoints
-Method	Endpoint	Description
-POST	/students	Add a student
-POST	/teachers	Add a teacher
-GET	/students	Retrieve students (teachers only)
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| POST | `/students` | Add a new student (full name, ID, class). |
+| POST | `/teachers` | Add a new teacher (full name, ID, class). |
+| GET | `/students` | Retrieve all students (accessible only to verified teachers). |
+| GET | `/teachers` | Retrieve all teachers (accessible only to verified teachers). |
+| GET | `/students/{identity_number}` | Retrieve a specific student by ID (teacher access required). |
+| GET | `/teachers/{identity_number}` | Retrieve a specific teacher by ID (teacher access required). |
+| GET | `/teachers/my-class/students` | Retrieve all students belonging to the authenticated teacher's class. |
 
 Access to GET endpoints is restricted and requires teacher ID verification.
  ### System Preview
@@ -121,7 +126,7 @@ User authentication is simplified and based on verifying the provided ID against
 
 ### Data Integrity
 
-Each teacher can only access students belonging to their own class.
+Teachers can retrieve all records and can also filter students by their own class.
 
 ## Phase B: Real-Time Location Tracking System
 
@@ -198,7 +203,7 @@ This final phase introduces a safety intelligence layer, enabling teachers to mo
 #### Smart Proximity Alerts
 - **Dynamic Distance Calculation**: Uses the Haversine formula to calculate real-time aerial distance between a teacher and their students.
 - **Safety Perimeter**: A "Too Far" alert is triggered when a student exceeds a 3 km radius from their teacher.
-- **Visual Warnings**: When a teacher enters their ID, the map highlights out-of-range students using purpule markers with descriptive popups.
+- **Visual Warnings**: When a teacher enters their ID, the map highlights out-of-range students using highlighted warning markers with descriptive popups.
 
 #### Class-Based Monitoring
 - **Automatic Filtering**: The system identifies the teacher’s class and monitors only the relevant students instead of all participants.
@@ -223,7 +228,7 @@ This final phase introduces a safety intelligence layer, enabling teachers to mo
 
 3. **Monitor Results**  
    - **Blue Markers**: Students within the 3 km safe zone  
-   - **Purpule Markers**: Students outside the safe zone  
+   - **highlighted warning markers**: Students outside the safe zone  
      Click on a red marker to see the exact distance from the teacher.
 
 ---
@@ -242,5 +247,5 @@ This final phase introduces a safety intelligence layer, enabling teachers to mo
 ### Design Decisions & Assumptions
 
 - **Teacher-Centric Logic**: The teacher’s last known location serves as the anchor point for all distance calculations. If no location is available, alerts cannot be generated.
-- **3 km Threshold**: Defined based on typical school safety guidelines for supervised trips.
+- **3 km Threshold**:The 3 km threshold follows the assignment requirement.
 - **Performance Optimization**: Distance calculations are handled on the backend to ensure a smooth and responsive map interface.
